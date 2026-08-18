@@ -839,15 +839,22 @@ svg {
     #srinagar-route-planner .hotel-dot.over { fill: var(--destructive); opacity: .6; }
     #srinagar-route-planner .centre-dot { fill: var(--viz-series-1); stroke: var(--background); stroke-width: 1.6; }
     #srinagar-route-planner .airport-dot { fill: var(--viz-series-3); stroke: var(--background); stroke-width: 1.8; }
-    #srinagar-route-planner .map-label { fill: var(--foreground); paint-order: stroke; stroke: var(--background); stroke-width: 3.5px; stroke-linejoin: round; }
-    #srinagar-route-planner .map-label.secondary { fill: var(--muted-foreground); }
+    #srinagar-route-planner .annotation-leader { stroke: var(--foreground); stroke-width: 1.4; opacity: .72; vector-effect: non-scaling-stroke; }
+    #srinagar-route-planner .annotation-box { fill: var(--card); stroke: var(--border); stroke-width: 1.2; opacity: .96; }
+    #srinagar-route-planner .annotation-text { fill: var(--card-foreground); font-weight: 500; dominant-baseline: middle; }
+    #srinagar-route-planner .hotel-code { fill: var(--card); stroke: var(--viz-series-2); stroke-width: 2; }
+    #srinagar-route-planner .hotel-code-text { fill: var(--card-foreground); font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+    #srinagar-route-planner .hotel-code.is-selected { fill: var(--primary); stroke: var(--primary); }
+    #srinagar-route-planner .hotel-code-text.is-selected { fill: var(--primary-foreground); }
+    #srinagar-route-planner .map-key-panel { fill: var(--card); stroke: var(--border); stroke-width: 1.2; opacity: .97; }
+    #srinagar-route-planner .map-key-title, #srinagar-route-planner .map-key-text { fill: var(--card-foreground); }
+    #srinagar-route-planner .map-key-title { font-weight: 500; }
+    #srinagar-route-planner .map-key-line { fill: none; stroke-width: 5; }
+    #srinagar-route-planner .map-key-line.rangreth { stroke: var(--viz-series-1); }
+    #srinagar-route-planner .map-key-line.lasjan { stroke: var(--viz-series-4); }
+    #srinagar-route-planner .map-key-line.airport { stroke: var(--viz-series-3); stroke-dasharray: 9 6; }
+    #srinagar-route-planner .map-key-hotel { fill: var(--viz-series-2); }
     #srinagar-route-planner .zone-halo { fill: var(--viz-series-1); opacity: .08; stroke: var(--viz-series-1); stroke-width: 1.2; stroke-dasharray: 4 4; }
-    #srinagar-route-planner .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 10px 0 4px; color: var(--muted-foreground); }
-    #srinagar-route-planner .legend-item { display: inline-flex; gap: 6px; align-items: center; }
-    #srinagar-route-planner .swatch { width: 22px; height: 3px; display: inline-block; background: var(--viz-series-1); }
-    #srinagar-route-planner .swatch.airport { background: var(--viz-series-3); }
-    #srinagar-route-planner .swatch.lasjan { background: var(--viz-series-4); }
-    #srinagar-route-planner .swatch.hotel { width: 9px; height: 9px; border-radius: 50%; background: var(--viz-series-2); }
     #srinagar-route-planner .selected-line { margin: 14px 0 0; min-height: 22px; }
     #srinagar-route-planner .route-tooltip { position: absolute; visibility: hidden; pointer-events: none; max-width: 230px; }
     #srinagar-route-planner .route-tooltip.is-visible { visibility: visible; }
@@ -867,7 +874,6 @@ svg {
       #srinagar-route-planner .planner-controls { grid-template-columns: 1fr; gap: 16px; margin: 24px 0; }
       #srinagar-route-planner .route-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
       #srinagar-route-planner .planner-map-wrap { aspect-ratio: 1 / 1; }
-      #srinagar-route-planner .map-label { display: none; }
       #srinagar-route-planner .zoom-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 22px 0 12px; }
       #srinagar-route-planner .zoom-row .btn { width: 100%; }
       #srinagar-route-planner .post-map { gap: 34px; margin-top: 38px; }
@@ -883,14 +889,7 @@ svg {
     <div>Best overall balance for the airport and both possible centre zones. Book a refundable room now; change it only after the exact venue appears on the admit card.</div>
   </div>
 
-  <div class="legend text-small" aria-label="Map key">
-    <strong>Map key:</strong>
-    <span class="legend-item"><span class="swatch"></span>Rangreth routes</span>
-    <span class="legend-item"><span class="swatch lasjan"></span>Lasjan / Soitang route</span>
-    <span class="legend-item"><span class="swatch airport"></span>Airport route</span>
-    <span class="legend-item"><span class="swatch hotel"></span>Hotel</span>
-  </div>
-  <div class="text-small text-muted">Select any hotel below. Times are simple driving estimates; keep at least 15 extra minutes on exam morning.</div>
+  <div class="text-small text-muted">Choose any hotel below. The map names every hotel and centre zone; pinch or use the buttons to explore. Keep at least 15 extra minutes on exam morning.</div>
 
   <div class="viz-controls planner-controls">
     <label class="form-label" for="sr-nights">Stay
@@ -926,8 +925,10 @@ svg {
         <g id="sr-halos"></g>
         <g id="sr-routes"></g>
         <g id="sr-points"></g>
-        <g id="sr-labels"></g>
       </g>
+      <g id="sr-leaders"></g>
+      <g id="sr-labels"></g>
+      <g id="sr-map-key"></g>
     </svg>
     <div class="tooltip route-tooltip" id="sr-tooltip"></div>
   </div>
@@ -30985,6 +30986,9 @@ svg {
       const nightsSelect = root.querySelector("#sr-nights");
       const svg = d3.select(root.querySelector(".planner-map"));
       const stage = svg.select("#sr-map-stage");
+      const leaderLayer = svg.select("#sr-leaders");
+      const labelLayer = svg.select("#sr-labels");
+      const mapKeyLayer = svg.select("#sr-map-key");
       const projection = d3.geoMercator().fitExtent([[42, 34], [878, 656]], data.roads);
       const path = d3.geoPath(projection);
       const money = n => "₹" + Math.round(n).toLocaleString("en-IN");
@@ -30992,9 +30996,14 @@ svg {
       const routeText = route => `${route.duration_min} min`;
       const distanceText = route => `${route.distance_km} km by road`;
 
+      let currentTransform = d3.zoomIdentity;
       const zoom = d3.zoom()
         .scaleExtent([1, 6])
-        .on("zoom", event => stage.attr("transform", event.transform));
+        .on("zoom", event => {
+          currentTransform = event.transform;
+          stage.attr("transform", currentTransform);
+          renderMapAnnotations();
+        });
       svg.call(zoom).on("dblclick.zoom", null);
       root.querySelector("#sr-zoom-in").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1.45));
       root.querySelector("#sr-zoom-out").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.45));
@@ -31038,37 +31047,172 @@ svg {
       svg.select("#sr-halos").append("ellipse").attr("class", "zone-halo").attr("cx", rx).attr("cy", ry).attr("rx", 62).attr("ry", 42);
 
       const pointLayer = svg.select("#sr-points");
-      pointLayer.append("path")
-        .attr("d", d3.symbol().type(d3.symbolDiamond).size(145)())
+      const airportMark = pointLayer.append("path")
         .attr("transform", `translate(${projection([airport.lon, airport.lat])})`)
         .attr("class", "airport-dot");
 
-      pointLayer.selectAll("path.centre")
+      const centreMarks = pointLayer.selectAll("path.centre")
         .data(centres)
         .join("path")
         .attr("class", "centre-dot map-link")
-        .attr("d", d => d3.symbol().type(d.precision === "OSM point" ? d3.symbolSquare : d3.symbolCircle).size(95)())
         .attr("transform", d => `translate(${projection([d.lon, d.lat])})`)
         .on("click", (_, d) => window.open(d.maps_url, "_blank", "noopener"));
 
-      pointLayer.selectAll("circle.hotel")
+      const hotelMarks = pointLayer.selectAll("circle.hotel")
         .data(hotels)
         .join("circle")
         .attr("class", "hotel-dot map-link")
-        .attr("r", 6)
         .attr("cx", d => projection([d.lon, d.lat])[0])
         .attr("cy", d => projection([d.lon, d.lat])[1])
         .on("click", (_, d) => { select.value = d.id; update(); });
 
-      const labels = svg.select("#sr-labels");
-      const named = [airport, centres.find(d => d.id === "c1"), centres.find(d => d.id === "c6")];
-      labels.selectAll("text.anchor-label")
-        .data(named)
-        .join("text")
-        .attr("class", "map-label")
-        .attr("x", d => projection([d.lon, d.lat])[0] + 10)
-        .attr("y", d => projection([d.lon, d.lat])[1] - 10)
-        .text(d => d.id === "c1" ? "Rangreth venue cluster" : d.id === "c6" ? "Lasjan / Soitang venue" : "SXR airport");
+      const callouts = [
+        {
+          id: "airport-label",
+          label: "Airport · SXR",
+          anchor: projection([airport.lon, airport.lat]),
+          compact: { dx: -380, dy: 28, w: 270, h: 52 },
+          wide: { dx: -125, dy: 20, w: 126, h: 30 }
+        },
+        {
+          id: "rangreth-label",
+          label: "Rangreth · 5 centres",
+          anchor: [rx, ry],
+          compact: { dx: 6, dy: 40, w: 350, h: 52 },
+          wide: { dx: 20, dy: 20, w: 188, h: 30 }
+        },
+        {
+          id: "lasjan-label",
+          label: "Lasjan / Soitang · 1 centre",
+          anchor: projection([centres.find(d => d.id === "c6").lon, centres.find(d => d.id === "c6").lat]),
+          compact: { dx: -250, dy: -78, w: 446, h: 52 },
+          wide: { dx: -52, dy: -44, w: 226, h: 30 }
+        }
+      ];
+      const hotelOffsets = {
+        h1: [-38, -20], h2: [-42, 26], h3: [40, 22],
+        h4: [42, 18], h5: [40, -22], h6: [-40, 12]
+      };
+
+      const calloutLeaders = leaderLayer.selectAll("line.place-callout")
+        .data(callouts)
+        .join("line")
+        .attr("class", "annotation-leader place-callout");
+      const calloutGroups = labelLayer.selectAll("g.place-callout")
+        .data(callouts)
+        .join("g")
+        .attr("class", "place-callout");
+      calloutGroups.append("rect").attr("class", "annotation-box").attr("rx", 10);
+      calloutGroups.append("text").attr("class", "annotation-text").text(d => d.label);
+
+      const hotelLeaders = leaderLayer.selectAll("line.hotel-callout")
+        .data(hotels)
+        .join("line")
+        .attr("class", "annotation-leader hotel-callout");
+      const hotelCodeGroups = labelLayer.selectAll("g.hotel-callout")
+        .data(hotels)
+        .join("g")
+        .attr("class", "hotel-callout map-link")
+        .on("click", (_, d) => { select.value = d.id; update(); });
+      hotelCodeGroups.append("circle").attr("class", "hotel-code");
+      hotelCodeGroups.append("text").attr("class", "hotel-code-text").text(d => d.id.toUpperCase());
+
+      const clamp = (value, low, high) => Math.max(low, Math.min(value, high));
+      const compactMode = () => root.getBoundingClientRect().width <= 560;
+
+      function renderMapAnnotations() {
+        const compact = compactMode();
+        const calloutFont = compact ? 32 : 16;
+        callouts.forEach(d => {
+          const anchor = currentTransform.apply(d.anchor);
+          const spec = compact ? d.compact : d.wide;
+          const x = clamp(anchor[0] + spec.dx, 8, 912 - spec.w);
+          const y = clamp(anchor[1] + spec.dy, 8, 692 - spec.h);
+          d.layout = { anchor, spec, x, y };
+        });
+        calloutLeaders
+          .attr("x1", d => d.layout.anchor[0])
+          .attr("y1", d => d.layout.anchor[1])
+          .attr("x2", d => clamp(d.layout.anchor[0], d.layout.x, d.layout.x + d.layout.spec.w))
+          .attr("y2", d => clamp(d.layout.anchor[1], d.layout.y, d.layout.y + d.layout.spec.h));
+        calloutGroups.select("rect")
+          .attr("x", d => d.layout.x)
+          .attr("y", d => d.layout.y)
+          .attr("width", d => d.layout.spec.w)
+          .attr("height", d => d.layout.spec.h);
+        calloutGroups.select("text")
+          .attr("x", d => d.layout.x + (compact ? 18 : 10))
+          .attr("y", d => d.layout.y + d.layout.spec.h / 2)
+          .attr("font-size", calloutFont);
+
+        const codeRadius = compact ? 24 : 12;
+        hotels.forEach(d => {
+          const anchor = currentTransform.apply(projection([d.lon, d.lat]));
+          const base = hotelOffsets[d.id];
+          const multiplier = compact ? 1 : .62;
+          const x = clamp(anchor[0] + base[0] * multiplier, codeRadius + 5, 915 - codeRadius);
+          const y = clamp(anchor[1] + base[1] * multiplier, codeRadius + 5, 695 - codeRadius);
+          d.codeLayout = { anchor, x, y };
+        });
+        hotelLeaders
+          .attr("x1", d => d.codeLayout.anchor[0])
+          .attr("y1", d => d.codeLayout.anchor[1])
+          .attr("x2", d => d.codeLayout.x)
+          .attr("y2", d => d.codeLayout.y);
+        hotelCodeGroups.attr("transform", d => `translate(${d.codeLayout.x},${d.codeLayout.y})`);
+        hotelCodeGroups.select("circle").attr("r", codeRadius);
+        hotelCodeGroups.select("text").attr("font-size", compact ? 30 : 13);
+      }
+
+      function renderMapKey() {
+        const compact = compactMode();
+        const box = compact ? { x: 24, y: 404, w: 872, h: 268 } : { x: 24, y: 482, w: 520, h: 180 };
+        const font = compact ? 32 : 15;
+        const titleFont = compact ? 32 : 18;
+        const leftX = box.x + (compact ? 24 : 18);
+        const rightX = box.x + (compact ? 346 : 194);
+        const titleY = box.y + (compact ? 34 : 25);
+        const routeStartY = box.y + (compact ? 76 : 56);
+        const routeGap = compact ? 43 : 28;
+        const hotelStartY = box.y + (compact ? 70 : 48);
+        const hotelGap = compact ? 36 : 22;
+        const routeItems = [
+          { label: "Rangreth route", cls: "rangreth" },
+          { label: "Lasjan route", cls: "lasjan" },
+          { label: "Airport route", cls: "airport" },
+          { label: "Hotel point", cls: "hotel" }
+        ];
+        mapKeyLayer.selectAll("*").remove();
+        mapKeyLayer.append("rect").attr("class", "map-key-panel")
+          .attr("x", box.x).attr("y", box.y).attr("width", box.w).attr("height", box.h).attr("rx", compact ? 18 : 10);
+        mapKeyLayer.append("text").attr("class", "map-key-title").attr("x", leftX).attr("y", titleY).attr("font-size", titleFont).text("MAP KEY");
+        mapKeyLayer.append("text").attr("class", "map-key-title").attr("x", rightX).attr("y", titleY).attr("font-size", titleFont).text("HOTELS");
+        routeItems.forEach((item, index) => {
+          const y = routeStartY + index * routeGap;
+          if (item.cls === "hotel") {
+            mapKeyLayer.append("circle").attr("class", "map-key-hotel").attr("cx", leftX + 18).attr("cy", y - 5).attr("r", compact ? 10 : 6);
+          } else {
+            mapKeyLayer.append("line").attr("class", `map-key-line ${item.cls}`).attr("x1", leftX).attr("x2", leftX + (compact ? 54 : 34)).attr("y1", y - 5).attr("y2", y - 5);
+          }
+          mapKeyLayer.append("text").attr("class", "map-key-text").attr("x", leftX + (compact ? 70 : 46)).attr("y", y).attr("font-size", font).text(item.label);
+        });
+        hotels.forEach((hotel, index) => {
+          mapKeyLayer.append("text").attr("class", "map-key-text")
+            .attr("x", rightX).attr("y", hotelStartY + index * hotelGap).attr("font-size", font)
+            .text(`${hotel.id.toUpperCase()}  ${hotel.name}`);
+        });
+      }
+
+      function updateMarkerSizes() {
+        const compact = compactMode();
+        airportMark.attr("d", d3.symbol().type(d3.symbolDiamond).size(compact ? 760 : 145)());
+        centreMarks.attr("d", d => d3.symbol().type(d.precision === "OSM point" ? d3.symbolSquare : d3.symbolCircle).size(compact ? 560 : 95)());
+        hotelMarks.attr("r", d => d.id === select.value ? (compact ? 15 : 9) : (compact ? 10 : 6));
+      }
+
+      renderMapAnnotations();
+      renderMapKey();
+      updateMarkerSizes();
 
       function update() {
         const h = byId[select.value];
@@ -31095,9 +31239,11 @@ svg {
         root.querySelector("#sr-lasjan-route").textContent = routeText(lasjanRoute.route);
         root.querySelector("#sr-lasjan-distance").textContent = distanceText(lasjanRoute.route);
 
-        pointLayer.selectAll("circle.hotel")
+        hotelMarks
           .attr("class", d => "hotel-dot map-link" + (d.id === h.id ? "" : " inactive") + (totalFor(d, nights) > 6000 ? " over" : ""))
-          .attr("r", d => d.id === h.id ? 9 : 6);
+        hotelCodeGroups.select("circle").classed("is-selected", d => d.id === h.id);
+        hotelCodeGroups.select("text").classed("is-selected", d => d.id === h.id);
+        updateMarkerSizes();
 
         const routeRows = [{ destination: airport, route: routes.airport, airport: true }, ...centreRoutes.map(d => ({ destination: d.centre, route: d.route, airport: false }))];
         svg.select("#sr-routes").selectAll("path")
@@ -31128,6 +31274,18 @@ svg {
         update();
         root.querySelector(".planner-controls").scrollIntoView({behavior: "smooth", block: "center"});
       }));
+      let previousCompact = compactMode();
+      const handleResize = () => {
+        const nextCompact = compactMode();
+        if (nextCompact !== previousCompact) {
+          previousCompact = nextCompact;
+          renderMapAnnotations();
+          renderMapKey();
+          updateMarkerSizes();
+        }
+      };
+      if (typeof ResizeObserver !== "undefined") new ResizeObserver(handleResize).observe(root);
+      else window.addEventListener("resize", handleResize);
       update();
     })();
   </script>
