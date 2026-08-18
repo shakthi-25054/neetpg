@@ -828,7 +828,9 @@ svg {
     #srinagar-route-planner .planner-controls label { margin: 0; }
     #srinagar-route-planner .route-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
     #srinagar-route-planner .planner-map-wrap { position: relative; width: 100%; aspect-ratio: 920 / 700; min-height: 0; }
-    #srinagar-route-planner .planner-map { width: 100%; height: 100%; display: block; touch-action: none; }
+    #srinagar-route-planner .planner-map { width: 100%; height: 100%; display: block; pointer-events: none; touch-action: pan-y; }
+    #srinagar-route-planner .planner-map-wrap.is-interactive .planner-map { pointer-events: auto; touch-action: none; }
+    #srinagar-route-planner .map-activate { position: absolute; z-index: 3; top: 12px; left: 12px; white-space: nowrap; touch-action: pan-y; }
     #srinagar-route-planner .road { fill: none; stroke: var(--border); stroke-width: 0.85; opacity: .72; }
     #srinagar-route-planner .road.trunk, #srinagar-route-planner .road.primary { stroke-width: 1.35; opacity: .95; }
     #srinagar-route-planner .route-centre { fill: none; stroke: var(--viz-series-1); stroke-width: 2.2; opacity: .86; }
@@ -836,7 +838,6 @@ svg {
     #srinagar-route-planner .route-airport { fill: none; stroke: var(--viz-series-3); stroke-width: 2.4; stroke-dasharray: 7 5; opacity: .9; }
     #srinagar-route-planner .hotel-dot { fill: var(--viz-series-2); stroke: var(--background); stroke-width: 2; }
     #srinagar-route-planner .hotel-dot.inactive { fill: var(--muted-foreground); opacity: .55; }
-    #srinagar-route-planner .hotel-dot.over { fill: var(--destructive); opacity: .6; }
     #srinagar-route-planner .centre-dot { fill: var(--viz-series-1); stroke: var(--background); stroke-width: 1.6; }
     #srinagar-route-planner .airport-dot { fill: var(--viz-series-3); stroke: var(--background); stroke-width: 1.8; }
     #srinagar-route-planner .annotation-leader { stroke: var(--foreground); stroke-width: 1.4; opacity: .72; vector-effect: non-scaling-stroke; }
@@ -846,14 +847,16 @@ svg {
     #srinagar-route-planner .hotel-code-text { fill: var(--card-foreground); font-weight: 500; text-anchor: middle; dominant-baseline: central; }
     #srinagar-route-planner .hotel-code.is-selected { fill: var(--primary); stroke: var(--primary); }
     #srinagar-route-planner .hotel-code-text.is-selected { fill: var(--primary-foreground); }
-    #srinagar-route-planner .map-key-panel { fill: var(--card); stroke: var(--border); stroke-width: 1.2; opacity: .97; }
-    #srinagar-route-planner .map-key-title, #srinagar-route-planner .map-key-text { fill: var(--card-foreground); }
-    #srinagar-route-planner .map-key-title { font-weight: 500; }
-    #srinagar-route-planner .map-key-line { fill: none; stroke-width: 5; }
-    #srinagar-route-planner .map-key-line.rangreth { stroke: var(--viz-series-1); }
-    #srinagar-route-planner .map-key-line.lasjan { stroke: var(--viz-series-4); }
-    #srinagar-route-planner .map-key-line.airport { stroke: var(--viz-series-3); stroke-dasharray: 9 6; }
-    #srinagar-route-planner .map-key-hotel { fill: var(--viz-series-2); }
+    #srinagar-route-planner .external-map-key { margin-top: 18px; }
+    #srinagar-route-planner .external-key-routes { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 12px; }
+    #srinagar-route-planner .external-key-item { display: inline-flex; align-items: center; gap: 8px; }
+    #srinagar-route-planner .external-key-line { display: inline-block; width: 28px; height: 4px; background: var(--viz-series-1); }
+    #srinagar-route-planner .external-key-line.lasjan { background: var(--viz-series-4); }
+    #srinagar-route-planner .external-key-line.airport { background: repeating-linear-gradient(90deg, var(--viz-series-3) 0 8px, transparent 8px 13px); }
+    #srinagar-route-planner .external-key-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--viz-series-2); }
+    #srinagar-route-planner .external-key-hotels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin-top: 16px; }
+    #srinagar-route-planner .external-hotel-item { display: flex; align-items: baseline; gap: 8px; }
+    #srinagar-route-planner .external-hotel-code { font-weight: 500; color: var(--card-foreground); }
     #srinagar-route-planner .zone-halo { fill: var(--viz-series-1); opacity: .08; stroke: var(--viz-series-1); stroke-width: 1.2; stroke-dasharray: 4 4; }
     #srinagar-route-planner .selected-line { margin: 14px 0 0; min-height: 22px; }
     #srinagar-route-planner .route-tooltip { position: absolute; visibility: hidden; pointer-events: none; max-width: 230px; }
@@ -881,21 +884,25 @@ svg {
       #srinagar-route-planner .plan-actions .btn { width: 100%; }
       #srinagar-route-planner .route-tooltip { display: none; }
     }
+    @media (max-width: 380px) {
+      #srinagar-route-planner .external-key-hotels { grid-template-columns: 1fr; }
+    }
   </style>
 
   <div class="card planner-hero">
-    <span class="viz-badge">Recommended</span>
-    <div class="viz-stat-value">Hotel New Sahil</div>
-    <div>Best overall balance for the airport and both possible centre zones. Book a refundable room now; change it only after the exact venue appears on the admit card.</div>
+    <span class="viz-badge">Recommended overall</span>
+    <div class="viz-stat-value">Hotel Arison</div>
+    <div>Strong overall route balance, with practical access to the airport and both possible centre zones. Choose a refundable room.</div>
   </div>
 
-  <div class="text-small text-muted">Choose any hotel below. The map names every hotel and centre zone; pinch or use the buttons to explore. Keep at least 15 extra minutes on exam morning.</div>
+  <div class="text-small text-muted">Hotel prices are shown per room per night. Choose 1, 2 or 3 nights to calculate the stay total. Rates checked 18 August 2026; final taxes and availability can change.</div>
 
   <div class="viz-controls planner-controls">
     <label class="form-label" for="sr-nights">Stay
       <select class="form-select" id="sr-nights">
-        <option value="2" selected>29-31 Aug · 2 nights</option>
-        <option value="3">28-31 Aug · 3 nights</option>
+        <option value="1">30–31 Aug · 1 night</option>
+        <option value="2" selected>29–31 Aug · 2 nights</option>
+        <option value="3">28–31 Aug · 3 nights</option>
       </select>
     </label>
     <label class="form-label" for="sr-hotel">Accommodation
@@ -904,7 +911,7 @@ svg {
   </div>
 
   <div class="route-stats">
-    <div class="card viz-stat"><div class="text-muted">Stay total</div><div class="viz-stat-value" id="sr-stay-cost">-</div><div><span id="sr-stay-name">-</span> · <span id="sr-stay-area">-</span></div><div id="sr-budget-status"></div></div>
+    <div class="card viz-stat"><div class="text-muted">Stay total</div><div class="viz-stat-value" id="sr-stay-cost">-</div><div><span id="sr-stay-name">-</span> · <span id="sr-stay-area">-</span></div><div id="sr-nightly-status"></div></div>
     <div class="card viz-stat"><div class="text-muted">Airport route</div><div class="viz-stat-value" id="sr-airport-route">-</div><div id="sr-airport-distance">-</div></div>
     <div class="card viz-stat"><div class="text-muted">Rangreth worst case</div><div class="viz-stat-value" id="sr-rangreth-route">-</div><div id="sr-rangreth-distance">-</div></div>
     <div class="card viz-stat"><div class="text-muted">Lasjan worst case</div><div class="viz-stat-value" id="sr-lasjan-route">-</div><div id="sr-lasjan-distance">-</div></div>
@@ -916,7 +923,10 @@ svg {
     <button type="button" class="btn btn-primary" id="sr-zoom-in">Zoom in</button>
   </div>
 
+  <div class="text-small text-muted"><strong>Tap once to interact with the map.</strong> Until then, swiping over it will scroll the page normally. The full-map view stays fixed; zoom in to pan.</div>
+
   <div class="planner-map-wrap">
+    <button type="button" class="btn btn-primary map-activate" id="sr-map-activate" aria-pressed="false">Tap once to interact</button>
     <svg class="planner-map" viewBox="0 0 920 700" role="img" aria-labelledby="sr-map-title sr-map-desc">
       <title id="sr-map-title">Srinagar airport, plausible exam venues and accommodation route network</title>
       <desc id="sr-map-desc">Select a hotel to compare real-road routes to Srinagar Airport and six plausible computer-based test venues in Rangreth and Lasjan.</desc>
@@ -928,9 +938,19 @@ svg {
       </g>
       <g id="sr-leaders"></g>
       <g id="sr-labels"></g>
-      <g id="sr-map-key"></g>
     </svg>
     <div class="tooltip route-tooltip" id="sr-tooltip"></div>
+  </div>
+
+  <div class="card external-map-key" aria-label="Map key">
+    <strong>Map key</strong>
+    <div class="external-key-routes">
+      <span class="external-key-item"><span class="external-key-line"></span>Rangreth route</span>
+      <span class="external-key-item"><span class="external-key-line lasjan"></span>Lasjan route</span>
+      <span class="external-key-item"><span class="external-key-line airport"></span>Airport route</span>
+      <span class="external-key-item"><span class="external-key-dot"></span>Hotel point</span>
+    </div>
+    <div class="external-key-hotels" id="sr-hotel-key"></div>
   </div>
 
   <div class="selected-line" id="sr-route-detail" aria-live="polite"></div>
@@ -938,12 +958,12 @@ svg {
   <div class="post-map">
     <div class="card simple-plan">
       <span class="viz-badge">Simple booking plan</span>
-      <div class="viz-stat-value">Book Hotel New Sahil</div>
-      <p>Choose 29–31 August for 2 nights, or arrive on 28 August for a calmer 3-night stay. Use free cancellation.</p>
+      <div class="viz-stat-value">Book Hotel Arison</div>
+      <p>It offers the best overall route balance among the added options. Use free cancellation.</p>
       <p class="text-muted">When the admit card arrives: check the exact centre, keep a 15-minute buffer, and rehearse the route once.</p>
       <div class="plan-actions">
-        <button type="button" class="btn btn-primary" data-hotel="h3">Select recommended hotel</button>
-        <button type="button" class="btn" data-hotel="h4">Prefer shortest centre trips</button>
+        <button type="button" class="btn btn-primary" data-hotel="h6">Select Hotel Arison</button>
+        <button type="button" class="btn" data-hotel="h3">Choose value option</button>
       </div>
     </div>
 
@@ -955,7 +975,7 @@ svg {
   </div>
   <script type="application/json" id="sr-data">{
   "as_of": "2026-08-18",
-  "stay_assumption": "29-31 August 2026 (2 nights); 28-31 August is the 3-night comparison",
+  "stay_assumption": "Choose 1, 2 or 3 nights; hotel prices are displayed per room per night",
   "places": [
     {
       "id": "airport",
@@ -1048,10 +1068,11 @@ svg {
       "nightly": 1202,
       "tax": 0,
       "price_note": "from price; tax not shown",
-      "rating": "-",
+      "rating": "8.7/10 (28)",
       "two_night_total": 2404,
       "three_night_total": 3606,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Fair%20Mount%20Humhama%20/%20Airport%20Road%20Srinagar"
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Fair%20Mount%20Humhama%20/%20Airport%20Road%20Srinagar",
+      "one_night_total": 1202
     },
     {
       "id": "h2",
@@ -1067,7 +1088,8 @@ svg {
       "rating": "5.0/5 (35)",
       "two_night_total": 2618,
       "three_night_total": 3927,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Shuhrah-I-Afaq%20Humhama%20Chowk%20Srinagar"
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Shuhrah-I-Afaq%20Humhama%20Chowk%20Srinagar",
+      "one_night_total": 1309
     },
     {
       "id": "h3",
@@ -1083,7 +1105,8 @@ svg {
       "rating": "4.7/5",
       "two_night_total": 3284,
       "three_night_total": 4926,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20New%20Sahil%20Bagh-i-Mehtab%20/%20Rawalpora%20Srinagar"
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20New%20Sahil%20Bagh-i-Mehtab%20/%20Rawalpora%20Srinagar",
+      "one_night_total": 1642
     },
     {
       "id": "h4",
@@ -1099,7 +1122,8 @@ svg {
       "rating": "4.6/5",
       "two_night_total": 3948,
       "three_night_total": 5922,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Bashaw%20Residency%20Sanat%20Nagar%20Srinagar"
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Bashaw%20Residency%20Sanat%20Nagar%20Srinagar",
+      "one_night_total": 1974
     },
     {
       "id": "h5",
@@ -1115,23 +1139,65 @@ svg {
       "rating": "new listing",
       "two_night_total": 4780,
       "three_night_total": 7170,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Casa%20Grande%20Hyderpora%20Srinagar"
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Casa%20Grande%20Hyderpora%20Srinagar",
+      "one_night_total": 2390
     },
     {
       "id": "h6",
       "kind": "hotel",
-      "name": "Hotel Heavenwood Heritage",
-      "area": "Parraypora / Hyderpora",
-      "lat": 34.0389954,
-      "lon": 74.7917691,
-      "precision": "neighbourhood point",
-      "nightly": 2392,
-      "tax": 306,
-      "price_note": "listed room + taxes",
-      "rating": "3.1/5 (14)",
-      "two_night_total": 5396,
-      "three_night_total": 8094,
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Heavenwood%20Heritage%20Parraypora%20/%20Hyderpora%20Srinagar"
+      "name": "Hotel Arison",
+      "area": "Sanat Nagar / Bypass",
+      "lat": 34.0333,
+      "lon": 74.791,
+      "precision": "published GPS point",
+      "nightly": 3211,
+      "tax": 450,
+      "price_note": "refundable room rate plus listed taxes",
+      "rating": "4.3/5 (40)",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Arison%20Srinagar",
+      "price_source": "MakeMyTrip",
+      "rating_source": "MakeMyTrip",
+      "one_night_total": 3661,
+      "two_night_total": 7322,
+      "three_night_total": 10983
+    },
+    {
+      "id": "h7",
+      "kind": "hotel",
+      "name": "Hotel Oriental Mansion",
+      "area": "Hyderpora Bypass",
+      "lat": 34.0461963,
+      "lon": 74.7881397,
+      "precision": "near published landmark",
+      "nightly": 3997,
+      "tax": 480,
+      "price_note": "refundable room rate plus listed taxes",
+      "rating": "4.7/5",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Hotel%20Oriental%20Mansion%20Hyderpora%20Srinagar",
+      "price_source": "MakeMyTrip",
+      "rating_source": "Goibibo",
+      "one_night_total": 4477,
+      "two_night_total": 8954,
+      "three_night_total": 13431
+    },
+    {
+      "id": "h8",
+      "kind": "hotel",
+      "name": "The Countryside Resorts",
+      "area": "Lasjan Bypass",
+      "lat": 34.0356,
+      "lon": 74.86412,
+      "precision": "published GPS point",
+      "nightly": 4496,
+      "tax": 0,
+      "price_note": "representative listed rate; final taxes may vary",
+      "rating": "4.0/5 (275)",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=The%20Countryside%20Resorts%20Lasjan%20Srinagar",
+      "price_source": "MakeMyTrip",
+      "rating_source": "MakeMyTrip",
+      "one_night_total": 4496,
+      "two_night_total": 8992,
+      "three_night_total": 13488
     }
   ],
   "routes": {
@@ -4522,93 +4588,125 @@ svg {
     },
     "h6": {
       "airport": {
-        "distance_km": 9.6,
+        "distance_km": 7.5,
         "duration_min": 16,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.792595,
-              34.037035
+              74.79044,
+              34.03307
             ],
             [
-              74.794213,
-              34.037451
+              74.79027,
+              34.03381
             ],
             [
-              74.79278,
-              34.036971
+              74.79093,
+              34.03429
             ],
             [
-              74.790564,
-              34.037162
+              74.79013,
+              34.03782
             ],
             [
-              74.791953,
-              34.032838
+              74.78812,
+              34.03892
             ],
             [
-              74.794197,
-              34.030857
+              74.78552,
+              34.03691
             ],
             [
-              74.798284,
-              34.029112
+              74.78347,
+              34.0336
             ],
             [
-              74.797528,
-              34.027704
+              74.78117,
+              34.03144
             ],
             [
-              74.797477,
-              34.025119
+              74.77451,
+              34.02385
             ],
             [
-              74.799642,
-              34.01154
+              74.76936,
+              34.02054
             ],
             [
-              74.791453,
-              33.999751
+              74.76677,
+              34.01662
             ],
             [
-              74.789664,
-              33.996031
+              74.76619,
+              34.01496
             ],
             [
-              74.790048,
-              33.993738
+              74.76698,
+              34.01253
             ],
             [
-              74.783831,
-              33.984562
+              74.76512,
+              34.00804
             ],
             [
-              74.784308,
-              33.983194
+              74.76811,
+              34.00718
             ],
             [
-              74.782163,
-              33.983885
+              74.7682,
+              34.00649
             ],
             [
-              74.780325,
-              33.983198
+              74.76922,
+              34.00498
             ],
             [
-              74.773932,
-              33.988355
+              74.76902,
+              34.00423
             ],
             [
-              74.776314,
-              33.9903
+              74.76853,
+              34.00395
             ],
             [
-              74.773775,
-              33.992797
+              74.76899,
+              34.00299
+            ],
+            [
+              74.769,
+              34.00136
+            ],
+            [
+              74.7677,
+              34.0001
+            ],
+            [
+              74.76947,
+              34.00052
+            ],
+            [
+              74.77019,
+              34.00041
+            ],
+            [
+              74.77093,
+              33.99918
+            ],
+            [
+              74.77146,
+              33.99917
+            ],
+            [
+              74.77275,
+              33.99779
+            ],
+            [
+              74.77627,
+              33.99521
             ],
             [
               74.77466,
@@ -4620,217 +4718,209 @@ svg {
       },
       "c1": {
         "distance_km": 6.1,
-        "duration_min": 9,
+        "duration_min": 10,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.794213,
-              34.037451
+              74.79093,
+              34.03429
             ],
             [
-              74.79278,
-              34.036971
+              74.79011,
+              34.03795
             ],
             [
-              74.791083,
-              34.037387
+              74.79047,
+              34.03774
             ],
             [
-              74.790564,
-              34.037162
+              74.79142,
+              34.03375
             ],
             [
-              74.791424,
-              34.033748
+              74.79246,
+              34.03223
             ],
             [
-              74.791953,
-              34.032838
+              74.7942,
+              34.03086
             ],
             [
-              74.794197,
-              34.030857
+              74.79828,
+              34.02911
             ],
             [
-              74.798284,
-              34.029112
+              74.79753,
+              34.0277
             ],
             [
-              74.797528,
-              34.027704
+              74.79748,
+              34.02512
             ],
             [
-              74.797477,
-              34.025119
-            ],
-            [
-              74.798244,
+              74.79824,
               34.02219
             ],
             [
-              74.798049,
-              34.020987
+              74.79805,
+              34.02099
             ],
             [
-              74.798877,
-              34.016912
+              74.79888,
+              34.01691
             ],
             [
-              74.799049,
-              34.013768
+              74.79905,
+              34.01377
             ],
             [
-              74.799805,
-              34.012276
+              74.79981,
+              34.01228
             ],
             [
-              74.799266,
+              74.79927,
               34.01076
             ],
             [
               74.7971,
-              34.008131
+              34.00813
             ],
             [
-              74.795203,
-              34.005108
+              74.7952,
+              34.00511
             ],
             [
-              74.793594,
-              34.003442
+              74.79359,
+              34.00344
             ],
             [
-              74.791126,
-              33.999104
+              74.79113,
+              33.9991
             ],
             [
-              74.791174,
-              33.997779
+              74.79117,
+              33.99778
             ],
             [
-              74.793461,
-              34.000612
+              74.79346,
+              34.00061
             ]
           ],
           "type": "LineString"
         }
       },
       "c2": {
-        "distance_km": 6.0,
+        "distance_km": 5.9,
         "duration_min": 8,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.794213,
-              34.037451
+              74.79093,
+              34.03429
             ],
             [
-              74.79278,
-              34.036971
+              74.79011,
+              34.03795
             ],
             [
-              74.791083,
-              34.037387
+              74.79047,
+              34.03774
             ],
             [
-              74.790564,
-              34.037162
+              74.79142,
+              34.03375
             ],
             [
-              74.791424,
-              34.033748
+              74.79246,
+              34.03223
             ],
             [
-              74.791953,
-              34.032838
+              74.7942,
+              34.03086
             ],
             [
-              74.794197,
-              34.030857
+              74.79828,
+              34.02911
             ],
             [
-              74.798284,
-              34.029112
+              74.79753,
+              34.0277
             ],
             [
-              74.797528,
-              34.027704
+              74.79748,
+              34.02512
             ],
             [
-              74.797477,
-              34.025119
-            ],
-            [
-              74.798244,
+              74.79824,
               34.02219
             ],
             [
-              74.798049,
-              34.020987
+              74.79805,
+              34.02099
             ],
             [
-              74.798877,
-              34.016912
+              74.79888,
+              34.01691
             ],
             [
-              74.799049,
-              34.013768
+              74.79905,
+              34.01377
             ],
             [
-              74.799805,
-              34.012276
+              74.79981,
+              34.01228
             ],
             [
-              74.799266,
+              74.79927,
               34.01076
             ],
             [
               74.7971,
-              34.008131
+              34.00813
             ],
             [
-              74.795203,
-              34.005108
+              74.7952,
+              34.00511
             ],
             [
-              74.793594,
-              34.003442
+              74.79359,
+              34.00344
             ],
             [
-              74.790016,
-              33.996895
+              74.79002,
+              33.9969
             ],
             [
-              74.790746,
-              33.996711
+              74.79075,
+              33.99671
             ],
             [
               74.79056,
-              33.996392
+              33.99639
             ]
           ],
           "type": "LineString"
@@ -4838,241 +4928,233 @@ svg {
       },
       "c3": {
         "distance_km": 6.3,
-        "duration_min": 10,
+        "duration_min": 11,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.794213,
-              34.037451
+              74.79093,
+              34.03429
             ],
             [
-              74.79278,
-              34.036971
+              74.79011,
+              34.03795
             ],
             [
-              74.791083,
-              34.037387
+              74.79047,
+              34.03774
             ],
             [
-              74.790564,
-              34.037162
+              74.79142,
+              34.03375
             ],
             [
-              74.791424,
-              34.033748
+              74.79246,
+              34.03223
             ],
             [
-              74.791953,
-              34.032838
+              74.7942,
+              34.03086
             ],
             [
-              74.794197,
-              34.030857
+              74.79828,
+              34.02911
             ],
             [
-              74.798284,
-              34.029112
+              74.79753,
+              34.0277
             ],
             [
-              74.797528,
-              34.027704
+              74.79748,
+              34.02512
             ],
             [
-              74.797477,
-              34.025119
-            ],
-            [
-              74.798244,
+              74.79824,
               34.02219
             ],
             [
-              74.798049,
-              34.020987
+              74.79805,
+              34.02099
             ],
             [
-              74.798877,
-              34.016912
+              74.79888,
+              34.01691
             ],
             [
-              74.799049,
-              34.013768
+              74.79905,
+              34.01377
             ],
             [
-              74.799761,
-              34.012433
+              74.79976,
+              34.01243
             ],
             [
-              74.799725,
-              34.011814
+              74.79972,
+              34.01181
             ],
             [
-              74.799266,
+              74.79927,
               34.01076
             ],
             [
               74.7971,
-              34.008131
+              34.00813
             ],
             [
-              74.795203,
-              34.005108
+              74.7952,
+              34.00511
             ],
             [
-              74.793594,
-              34.003442
+              74.79359,
+              34.00344
             ],
             [
-              74.791126,
-              33.999104
+              74.79113,
+              33.9991
             ],
             [
-              74.791291,
+              74.79129,
               33.99898
             ],
             [
-              74.792739,
-              34.000805
+              74.79274,
+              34.0008
             ],
             [
-              74.795206,
-              34.002308
+              74.79521,
+              34.00231
             ],
             [
-              74.795421,
-              34.002126
+              74.79542,
+              34.00213
             ],
             [
-              74.794809,
-              34.001747
+              74.79481,
+              34.00175
             ],
             [
               74.79519,
-              34.001334
+              34.00133
             ]
           ],
           "type": "LineString"
         }
       },
       "c4": {
-        "distance_km": 6.1,
-        "duration_min": 8,
+        "distance_km": 6.0,
+        "duration_min": 9,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.794213,
-              34.037451
+              74.79093,
+              34.03429
             ],
             [
-              74.79278,
-              34.036971
+              74.79011,
+              34.03795
             ],
             [
-              74.791083,
-              34.037387
+              74.79047,
+              34.03774
             ],
             [
-              74.790564,
-              34.037162
+              74.79142,
+              34.03375
             ],
             [
-              74.791424,
-              34.033748
+              74.79246,
+              34.03223
             ],
             [
-              74.791953,
-              34.032838
+              74.7942,
+              34.03086
             ],
             [
-              74.794197,
-              34.030857
+              74.79828,
+              34.02911
             ],
             [
-              74.798284,
-              34.029112
+              74.79753,
+              34.0277
             ],
             [
-              74.797528,
-              34.027704
+              74.79748,
+              34.02512
             ],
             [
-              74.797477,
-              34.025119
-            ],
-            [
-              74.798244,
+              74.79824,
               34.02219
             ],
             [
-              74.798049,
-              34.020987
+              74.79805,
+              34.02099
             ],
             [
-              74.798877,
-              34.016912
+              74.79888,
+              34.01691
             ],
             [
-              74.799049,
-              34.013768
+              74.79905,
+              34.01377
             ],
             [
-              74.799805,
-              34.012276
+              74.79981,
+              34.01228
             ],
             [
-              74.799266,
+              74.79927,
               34.01076
             ],
             [
               74.7971,
-              34.008131
+              34.00813
             ],
             [
-              74.795203,
-              34.005108
+              74.7952,
+              34.00511
             ],
             [
-              74.793594,
-              34.003442
+              74.79359,
+              34.00344
             ],
             [
-              74.790585,
-              33.997963
+              74.79058,
+              33.99796
             ],
             [
               74.79005,
-              33.999816
+              33.99982
             ],
             [
-              74.789505,
+              74.78951,
               33.99983
             ],
             [
-              74.789653,
-              33.999123
+              74.78965,
+              33.99912
             ]
           ],
           "type": "LineString"
@@ -5080,209 +5162,1535 @@ svg {
       },
       "c5": {
         "distance_km": 5.3,
-        "duration_min": 7,
+        "duration_min": 8,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.794213,
-              34.037451
+              74.79093,
+              34.03429
             ],
             [
-              74.79278,
-              34.036971
+              74.79011,
+              34.03795
             ],
             [
-              74.791083,
-              34.037387
+              74.79047,
+              34.03774
             ],
             [
-              74.790564,
-              34.037162
+              74.79142,
+              34.03375
             ],
             [
-              74.791424,
-              34.033748
+              74.79246,
+              34.03223
             ],
             [
-              74.791953,
-              34.032838
+              74.7942,
+              34.03086
             ],
             [
-              74.794197,
-              34.030857
+              74.79828,
+              34.02911
             ],
             [
-              74.798284,
-              34.029112
+              74.79753,
+              34.0277
             ],
             [
-              74.797528,
-              34.027704
+              74.79748,
+              34.02512
             ],
             [
-              74.797477,
-              34.025119
-            ],
-            [
-              74.798244,
+              74.79824,
               34.02219
             ],
             [
-              74.798049,
-              34.020987
+              74.79805,
+              34.02099
             ],
             [
-              74.798877,
-              34.016912
+              74.79888,
+              34.01691
             ],
             [
-              74.799049,
-              34.013768
+              74.79905,
+              34.01377
             ],
             [
-              74.799805,
-              34.012276
+              74.79981,
+              34.01228
             ],
             [
-              74.799266,
+              74.79927,
               34.01076
             ],
             [
               74.7971,
-              34.008131
+              34.00813
             ],
             [
-              74.795203,
-              34.005108
+              74.7952,
+              34.00511
             ],
             [
-              74.793923,
-              34.003916
+              74.79392,
+              34.00392
             ],
             [
-              74.793275,
+              74.79327,
               34.00285
             ],
             [
-              74.792704,
-              34.002694
+              74.7927,
+              34.00269
             ],
             [
-              74.791815,
-              34.001723
+              74.79181,
+              34.00172
             ]
           ],
           "type": "LineString"
         }
       },
       "c6": {
-        "distance_km": 7.5,
-        "duration_min": 9,
+        "distance_km": 8.2,
+        "duration_min": 10,
         "geometry": {
           "coordinates": [
             [
-              74.791769,
-              34.038995
+              74.79078,
+              34.03328
             ],
             [
-              74.791771,
-              34.037984
+              74.79044,
+              34.03307
             ],
             [
-              74.792595,
-              34.037035
+              74.79027,
+              34.03381
             ],
             [
-              74.792947,
-              34.037071
+              74.79093,
+              34.03429
             ],
             [
-              74.797696,
-              34.039264
+              74.79011,
+              34.03795
             ],
             [
-              74.799115,
-              34.040211
+              74.79156,
+              34.0373
+            ],
+            [
+              74.79295,
+              34.03707
+            ],
+            [
+              74.7977,
+              34.03926
+            ],
+            [
+              74.79912,
+              34.04021
             ],
             [
               74.8004,
               34.04266
             ],
             [
-              74.802155,
-              34.044806
+              74.80205,
+              34.04462
             ],
             [
-              74.802315,
-              34.049403
+              74.80231,
+              34.0494
             ],
             [
-              74.804653,
-              34.051802
+              74.80471,
+              34.05199
             ],
             [
               74.80428,
-              34.054746
+              34.05475
             ],
             [
-              74.806925,
-              34.055536
+              74.80693,
+              34.05554
             ],
             [
-              74.811573,
-              34.057745
+              74.81198,
+              34.05787
             ],
             [
-              74.817895,
-              34.059358
+              74.81822,
+              34.05942
             ],
             [
-              74.820929,
-              34.059315
+              74.82051,
+              34.05939
+            ],
+            [
+              74.82093,
+              34.05931
             ],
             [
               74.82084,
-              34.058179
+              34.05818
             ],
             [
-              74.822892,
-              34.057813
+              74.82289,
+              34.05781
             ],
             [
-              74.832317,
+              74.83232,
               34.05176
             ],
             [
               74.83323,
-              34.052094
+              34.05209
             ],
             [
-              74.834423,
-              34.051552
+              74.83442,
+              34.05155
             ],
             [
-              74.837329,
-              34.052693
+              74.83733,
+              34.05269
             ],
             [
-              74.841064,
-              34.051951
+              74.84106,
+              34.05195
             ],
             [
-              74.850245,
-              34.051751
+              74.85025,
+              34.05175
+            ]
+          ],
+          "type": "LineString"
+        }
+      }
+    },
+    "h7": {
+      "airport": {
+        "distance_km": 12.0,
+        "duration_min": 18,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.79145,
+              33.99975
+            ],
+            [
+              74.78966,
+              33.99603
+            ],
+            [
+              74.79005,
+              33.99374
+            ],
+            [
+              74.78383,
+              33.98456
+            ],
+            [
+              74.78431,
+              33.98319
+            ],
+            [
+              74.78216,
+              33.98389
+            ],
+            [
+              74.78033,
+              33.9832
+            ],
+            [
+              74.77393,
+              33.98835
+            ],
+            [
+              74.77631,
+              33.9903
+            ],
+            [
+              74.77378,
+              33.9928
+            ],
+            [
+              74.77466,
+              33.99376
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c1": {
+        "distance_km": 8.5,
+        "duration_min": 11,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79905,
+              34.01377
+            ],
+            [
+              74.7998,
+              34.01212
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79113,
+              33.9991
+            ],
+            [
+              74.79117,
+              33.99778
+            ],
+            [
+              74.79346,
+              34.00061
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c2": {
+        "distance_km": 8.4,
+        "duration_min": 10,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79905,
+              34.01377
+            ],
+            [
+              74.79981,
+              34.01228
+            ],
+            [
+              74.79927,
+              34.01076
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79002,
+              33.9969
+            ],
+            [
+              74.79056,
+              33.99639
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c3": {
+        "distance_km": 8.7,
+        "duration_min": 12,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.79113,
+              33.9991
+            ],
+            [
+              74.79521,
+              34.00231
+            ],
+            [
+              74.79519,
+              34.00133
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c4": {
+        "distance_km": 8.5,
+        "duration_min": 10,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79905,
+              34.01377
+            ],
+            [
+              74.79981,
+              34.01228
+            ],
+            [
+              74.79927,
+              34.01076
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79058,
+              33.99796
+            ],
+            [
+              74.79005,
+              33.99982
+            ],
+            [
+              74.78951,
+              33.99983
+            ],
+            [
+              74.78965,
+              33.99912
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c5": {
+        "distance_km": 7.7,
+        "duration_min": 9,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78645,
+              34.05552
+            ],
+            [
+              74.78737,
+              34.05496
+            ],
+            [
+              74.79122,
+              34.03415
+            ],
+            [
+              74.7935,
+              34.03131
+            ],
+            [
+              74.79828,
+              34.02911
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.7952,
+              34.00511
+            ],
+            [
+              74.79181,
+              34.00172
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c6": {
+        "distance_km": 8.9,
+        "duration_min": 10,
+        "geometry": {
+          "coordinates": [
+            [
+              74.78841,
+              34.04623
+            ],
+            [
+              74.78639,
+              34.0576
+            ],
+            [
+              74.7856,
+              34.06088
+            ],
+            [
+              74.78481,
+              34.06214
+            ],
+            [
+              74.78604,
+              34.0579
+            ],
+            [
+              74.79188,
+              34.05573
+            ],
+            [
+              74.79583,
+              34.0547
+            ],
+            [
+              74.80213,
+              34.05422
+            ],
+            [
+              74.80693,
+              34.05554
+            ],
+            [
+              74.81198,
+              34.05787
+            ],
+            [
+              74.81789,
+              34.05936
+            ],
+            [
+              74.82027,
+              34.05942
+            ],
+            [
+              74.82093,
+              34.05931
+            ],
+            [
+              74.82084,
+              34.05818
+            ],
+            [
+              74.82289,
+              34.05781
+            ],
+            [
+              74.83232,
+              34.05176
+            ],
+            [
+              74.83323,
+              34.05209
+            ],
+            [
+              74.83442,
+              34.05155
+            ],
+            [
+              74.83733,
+              34.05269
+            ],
+            [
+              74.84106,
+              34.05195
+            ],
+            [
+              74.85025,
+              34.05175
+            ]
+          ],
+          "type": "LineString"
+        }
+      }
+    },
+    "h8": {
+      "airport": {
+        "distance_km": 20.2,
+        "duration_min": 28,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81048,
+              34.0243
+            ],
+            [
+              74.79845,
+              34.02879
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79964,
+              34.01154
+            ],
+            [
+              74.79145,
+              33.99975
+            ],
+            [
+              74.78966,
+              33.99603
+            ],
+            [
+              74.79005,
+              33.99374
+            ],
+            [
+              74.78383,
+              33.98456
+            ],
+            [
+              74.78431,
+              33.98319
+            ],
+            [
+              74.78216,
+              33.98389
+            ],
+            [
+              74.78033,
+              33.9832
+            ],
+            [
+              74.77393,
+              33.98835
+            ],
+            [
+              74.77631,
+              33.9903
+            ],
+            [
+              74.77378,
+              33.9928
+            ],
+            [
+              74.77466,
+              33.99376
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c1": {
+        "distance_km": 16.7,
+        "duration_min": 21,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81048,
+              34.0243
+            ],
+            [
+              74.79845,
+              34.02879
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79905,
+              34.01377
+            ],
+            [
+              74.7998,
+              34.01212
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79113,
+              33.9991
+            ],
+            [
+              74.79117,
+              33.99778
+            ],
+            [
+              74.79346,
+              34.00061
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c2": {
+        "distance_km": 16.5,
+        "duration_min": 20,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81075,
+              34.02423
+            ],
+            [
+              74.79879,
+              34.02884
+            ],
+            [
+              74.79803,
+              34.02865
+            ],
+            [
+              74.79756,
+              34.02428
+            ],
+            [
+              74.79905,
+              34.01377
+            ],
+            [
+              74.7998,
+              34.01212
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79002,
+              33.9969
+            ],
+            [
+              74.79056,
+              33.99639
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c3": {
+        "distance_km": 16.9,
+        "duration_min": 22,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81048,
+              34.0243
+            ],
+            [
+              74.79845,
+              34.02879
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.79113,
+              33.9991
+            ],
+            [
+              74.79521,
+              34.00231
+            ],
+            [
+              74.79519,
+              34.00133
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c4": {
+        "distance_km": 16.6,
+        "duration_min": 20,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81048,
+              34.0243
+            ],
+            [
+              74.79845,
+              34.02879
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.79359,
+              34.00344
+            ],
+            [
+              74.79058,
+              33.99796
+            ],
+            [
+              74.79005,
+              33.99982
+            ],
+            [
+              74.78951,
+              33.99983
+            ],
+            [
+              74.78965,
+              33.99912
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c5": {
+        "distance_km": 15.9,
+        "duration_min": 19,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87341,
+              34.03469
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.86925,
+              34.0376
+            ],
+            [
+              74.81396,
+              34.02403
+            ],
+            [
+              74.81048,
+              34.0243
+            ],
+            [
+              74.79845,
+              34.02879
+            ],
+            [
+              74.79753,
+              34.0277
+            ],
+            [
+              74.79748,
+              34.02512
+            ],
+            [
+              74.79972,
+              34.01181
+            ],
+            [
+              74.7952,
+              34.00511
+            ],
+            [
+              74.79181,
+              34.00172
+            ]
+          ],
+          "type": "LineString"
+        }
+      },
+      "c6": {
+        "distance_km": 8.2,
+        "duration_min": 13,
+        "geometry": {
+          "coordinates": [
+            [
+              74.86383,
+              34.03633
+            ],
+            [
+              74.86149,
+              34.03572
+            ],
+            [
+              74.86094,
+              34.03444
+            ],
+            [
+              74.86216,
+              34.03173
+            ],
+            [
+              74.86408,
+              34.0298
+            ],
+            [
+              74.87443,
+              34.02409
+            ],
+            [
+              74.88378,
+              34.02142
+            ],
+            [
+              74.88343,
+              34.0232
+            ],
+            [
+              74.88243,
+              34.02316
+            ],
+            [
+              74.8832,
+              34.02461
+            ],
+            [
+              74.88258,
+              34.02693
+            ],
+            [
+              74.88351,
+              34.02755
+            ],
+            [
+              74.88149,
+              34.02974
+            ],
+            [
+              74.87597,
+              34.03411
+            ],
+            [
+              74.87422,
+              34.03431
+            ],
+            [
+              74.87304,
+              34.03498
+            ],
+            [
+              74.8722,
+              34.03623
+            ],
+            [
+              74.87162,
+              34.03802
+            ],
+            [
+              74.86884,
+              34.04059
+            ],
+            [
+              74.86754,
+              34.04226
+            ],
+            [
+              74.86435,
+              34.04439
+            ],
+            [
+              74.85914,
+              34.04683
+            ],
+            [
+              74.85717,
+              34.04948
+            ],
+            [
+              74.8562,
+              34.05029
+            ],
+            [
+              74.85416,
+              34.05155
+            ],
+            [
+              74.85025,
+              34.05175
             ]
           ],
           "type": "LineString"
@@ -30988,34 +32396,87 @@ svg {
       const stage = svg.select("#sr-map-stage");
       const leaderLayer = svg.select("#sr-leaders");
       const labelLayer = svg.select("#sr-labels");
-      const mapKeyLayer = svg.select("#sr-map-key");
+      const mapWidth = 920;
+      const mapHeight = 700;
       const projection = d3.geoMercator().fitExtent([[42, 34], [878, 656]], data.roads);
       const path = d3.geoPath(projection);
       const money = n => "₹" + Math.round(n).toLocaleString("en-IN");
-      const totalFor = (h, nights) => nights * (h.nightly + h.tax);
+      const nightlyFor = h => h.nightly + h.tax;
+      const totalFor = (h, nights) => nights * nightlyFor(h);
       const routeText = route => `${route.duration_min} min`;
       const distanceText = route => `${route.distance_km} km by road`;
+      const ratingScore = h => {
+        const match = h.rating.match(/^(\d+(?:\.\d+)?)\/(\d+)/);
+        return match ? (Number(match[1]) / Number(match[2])) * 5 : -Infinity;
+      };
+      const accommodationOrder = hotels.slice().sort((a, b) => {
+        if (a.id === "h6") return -1;
+        if (b.id === "h6") return 1;
+        const aIsNew = /new listing/i.test(a.rating);
+        const bIsNew = /new listing/i.test(b.rating);
+        if (aIsNew !== bIsNew) return aIsNew ? 1 : -1;
+        return ratingScore(b) - ratingScore(a);
+      });
 
       let currentTransform = d3.zoomIdentity;
       const zoom = d3.zoom()
         .scaleExtent([1, 6])
+        .extent([[0, 0], [mapWidth, mapHeight]])
+        .translateExtent([[0, 0], [mapWidth, mapHeight]])
         .on("zoom", event => {
           currentTransform = event.transform;
           stage.attr("transform", currentTransform);
           renderMapAnnotations();
         });
-      svg.call(zoom).on("dblclick.zoom", null);
-      root.querySelector("#sr-zoom-in").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1.45));
-      root.querySelector("#sr-zoom-out").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.45));
-      root.querySelector("#sr-zoom-reset").addEventListener("click", () => svg.transition().duration(250).call(zoom.transform, d3.zoomIdentity));
+      const mapWrap = root.querySelector(".planner-map-wrap");
+      const mapActivate = root.querySelector("#sr-map-activate");
+      let mapIsInteractive = false;
+      function setMapInteractive(active) {
+        mapIsInteractive = active;
+        mapWrap.classList.toggle("is-interactive", active);
+        mapActivate.setAttribute("aria-pressed", String(active));
+        mapActivate.textContent = active ? "Release map" : "Tap once to interact";
+        if (active) svg.call(zoom).on("dblclick.zoom", null);
+        else {
+          svg.interrupt();
+          svg.on(".zoom", null);
+        }
+      }
+      mapActivate.addEventListener("click", () => setMapInteractive(!mapIsInteractive));
+      root.querySelector("#sr-zoom-in").addEventListener("click", () => {
+        setMapInteractive(true);
+        svg.transition().duration(250).call(zoom.scaleBy, 1.45);
+      });
+      root.querySelector("#sr-zoom-out").addEventListener("click", () => {
+        setMapInteractive(true);
+        svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.45);
+      });
+      root.querySelector("#sr-zoom-reset").addEventListener("click", () => {
+        setMapInteractive(true);
+        svg.transition().duration(250).call(zoom.transform, d3.zoomIdentity);
+      });
 
-      hotels.forEach(h => {
+      accommodationOrder.forEach(h => {
         const option = document.createElement("option");
+        const prefix = h.id === "h6" ? "★ Recommended • " : "";
         option.value = h.id;
-        option.textContent = h.id === "h3" ? `★ Recommended — ${h.name} — ${money(h.two_night_total)}` : `${h.name} — ${money(h.two_night_total)}`;
+        option.textContent = `${prefix}${h.name} • ${money(nightlyFor(h))}/night • ${h.rating}`;
         select.appendChild(option);
       });
-      select.value = "h3";
+      select.value = "h6";
+
+      const hotelKey = root.querySelector("#sr-hotel-key");
+      accommodationOrder.forEach(hotel => {
+        const item = document.createElement("div");
+        const code = document.createElement("span");
+        const name = document.createElement("span");
+        item.className = "external-hotel-item";
+        code.className = "external-hotel-code";
+        code.textContent = hotel.id.toUpperCase();
+        name.textContent = hotel.name;
+        item.append(code, name);
+        hotelKey.appendChild(item);
+      });
 
       const centreList = root.querySelector("#sr-centre-list");
       [
@@ -31090,8 +32551,9 @@ svg {
         }
       ];
       const hotelOffsets = {
-        h1: [-38, -20], h2: [-42, 26], h3: [40, 22],
-        h4: [42, 18], h5: [40, -22], h6: [-40, 12]
+        h1: [-38, -20], h2: [-42, 26], h3: [44, 26],
+        h4: [48, 24], h5: [50, -10], h6: [-52, 28],
+        h7: [-48, -18], h8: [45, 28]
       };
 
       const calloutLeaders = leaderLayer.selectAll("line.place-callout")
@@ -31164,45 +32626,6 @@ svg {
         hotelCodeGroups.select("text").attr("font-size", compact ? 30 : 13);
       }
 
-      function renderMapKey() {
-        const compact = compactMode();
-        const box = compact ? { x: 24, y: 404, w: 872, h: 268 } : { x: 24, y: 482, w: 520, h: 180 };
-        const font = compact ? 32 : 15;
-        const titleFont = compact ? 32 : 18;
-        const leftX = box.x + (compact ? 24 : 18);
-        const rightX = box.x + (compact ? 346 : 194);
-        const titleY = box.y + (compact ? 34 : 25);
-        const routeStartY = box.y + (compact ? 76 : 56);
-        const routeGap = compact ? 43 : 28;
-        const hotelStartY = box.y + (compact ? 70 : 48);
-        const hotelGap = compact ? 36 : 22;
-        const routeItems = [
-          { label: "Rangreth route", cls: "rangreth" },
-          { label: "Lasjan route", cls: "lasjan" },
-          { label: "Airport route", cls: "airport" },
-          { label: "Hotel point", cls: "hotel" }
-        ];
-        mapKeyLayer.selectAll("*").remove();
-        mapKeyLayer.append("rect").attr("class", "map-key-panel")
-          .attr("x", box.x).attr("y", box.y).attr("width", box.w).attr("height", box.h).attr("rx", compact ? 18 : 10);
-        mapKeyLayer.append("text").attr("class", "map-key-title").attr("x", leftX).attr("y", titleY).attr("font-size", titleFont).text("MAP KEY");
-        mapKeyLayer.append("text").attr("class", "map-key-title").attr("x", rightX).attr("y", titleY).attr("font-size", titleFont).text("HOTELS");
-        routeItems.forEach((item, index) => {
-          const y = routeStartY + index * routeGap;
-          if (item.cls === "hotel") {
-            mapKeyLayer.append("circle").attr("class", "map-key-hotel").attr("cx", leftX + 18).attr("cy", y - 5).attr("r", compact ? 10 : 6);
-          } else {
-            mapKeyLayer.append("line").attr("class", `map-key-line ${item.cls}`).attr("x1", leftX).attr("x2", leftX + (compact ? 54 : 34)).attr("y1", y - 5).attr("y2", y - 5);
-          }
-          mapKeyLayer.append("text").attr("class", "map-key-text").attr("x", leftX + (compact ? 70 : 46)).attr("y", y).attr("font-size", font).text(item.label);
-        });
-        hotels.forEach((hotel, index) => {
-          mapKeyLayer.append("text").attr("class", "map-key-text")
-            .attr("x", rightX).attr("y", hotelStartY + index * hotelGap).attr("font-size", font)
-            .text(`${hotel.id.toUpperCase()}  ${hotel.name}`);
-        });
-      }
-
       function updateMarkerSizes() {
         const compact = compactMode();
         airportMark.attr("d", d3.symbol().type(d3.symbolDiamond).size(compact ? 760 : 145)());
@@ -31211,27 +32634,22 @@ svg {
       }
 
       renderMapAnnotations();
-      renderMapKey();
       updateMarkerSizes();
 
       function update() {
         const h = byId[select.value];
         const nights = Number(nightsSelect.value);
         const routes = data.routes[h.id];
+        const nightlyRate = nightlyFor(h);
         const stayTotal = totalFor(h, nights);
         const centreRoutes = centres.map(c => ({ centre: c, route: routes[c.id] }));
         const rangrethRoutes = centreRoutes.filter(d => d.centre.zone === "Rangreth");
         const rangrethWorst = rangrethRoutes.reduce((a, b) => a.route.duration_min > b.route.duration_min ? a : b);
         const lasjanRoute = centreRoutes.find(d => d.centre.id === "c6");
-        hotels.forEach(optionHotel => {
-          const option = select.querySelector(`option[value="${optionHotel.id}"]`);
-          const prefix = optionHotel.id === "h3" ? "★ Recommended — " : "";
-          option.textContent = `${prefix}${optionHotel.name} — ${money(totalFor(optionHotel, nights))}`;
-        });
         root.querySelector("#sr-stay-name").textContent = h.name;
         root.querySelector("#sr-stay-area").textContent = h.area;
         root.querySelector("#sr-stay-cost").textContent = money(stayTotal);
-        root.querySelector("#sr-budget-status").textContent = stayTotal >= 3000 && stayTotal <= 6000 ? "inside ₹3k-₹6k target" : stayTotal < 3000 ? "below target before unshown fees" : "above ₹6k target";
+        root.querySelector("#sr-nightly-status").textContent = `${money(nightlyRate)}/night • ${h.rating}`;
         root.querySelector("#sr-airport-route").textContent = routeText(routes.airport);
         root.querySelector("#sr-airport-distance").textContent = distanceText(routes.airport);
         root.querySelector("#sr-rangreth-route").textContent = routeText(rangrethWorst.route);
@@ -31240,7 +32658,7 @@ svg {
         root.querySelector("#sr-lasjan-distance").textContent = distanceText(lasjanRoute.route);
 
         hotelMarks
-          .attr("class", d => "hotel-dot map-link" + (d.id === h.id ? "" : " inactive") + (totalFor(d, nights) > 6000 ? " over" : ""))
+          .attr("class", d => "hotel-dot map-link" + (d.id === h.id ? "" : " inactive"));
         hotelCodeGroups.select("circle").classed("is-selected", d => d.id === h.id);
         hotelCodeGroups.select("text").classed("is-selected", d => d.id === h.id);
         updateMarkerSizes();
@@ -31280,7 +32698,6 @@ svg {
         if (nextCompact !== previousCompact) {
           previousCompact = nextCompact;
           renderMapAnnotations();
-          renderMapKey();
           updateMarkerSizes();
         }
       };
